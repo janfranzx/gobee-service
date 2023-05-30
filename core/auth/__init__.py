@@ -26,8 +26,9 @@ def validate_token(f):
             token_encoded = str.encode(token)
             # print(token_encoded)
             data = jwt.decode(token_encoded, SALT, algorithms=['HS256'])
+            print('&&&&&&&&&: ', data)
             merchant = mongo.db.merchants.find_one({'_id': objectid.ObjectId(data['id'])})
-            print(merchant)
+            print('**************: ', merchant)
         except Exception as e:
             print(e)
             return jsonify({'status': 'error', 'message': 'invalid token'})
@@ -39,20 +40,21 @@ def validate_token(f):
 def handle_login():
     login_schema = LoginSchema()
     req_body = request.get_json()
+    print(req_body)
     errors = login_schema.validate(req_body)
     if errors:
         response = jsonify({
             'status': 'error',
-            'message': 'Invalid mobile number and/or password'
+            'message': 'Invalid email and/or password'
         })
 
         return response, 401
     
     merchants = mongo.db.merchants
-    filter = {'mobile': req_body['mobile']}
+    filter = {'email': req_body['email']}
     m = merchants.find_one(filter)
     if not m:
-        response = jsonify({'status': 'error', 'message': 'Invalid mobile number and/or password'})
+        response = jsonify({'status': 'error', 'message': 'Invalid email and/or password.'})
         return response, 401
 
     if check_password_hash(m['password'], req_body['password']):
@@ -68,6 +70,7 @@ def handle_login():
 def handle_register():
     schema = RegisterSchema()
     req_body = request.get_json()
+    print(req_body)
     errors = schema.validate(req_body)
     if errors:
         print('errors: ', errors)
@@ -77,7 +80,8 @@ def handle_register():
         })
         return response, 401
     merchants = mongo.db.merchants
-    filter = {'mobile': req_body['mobile']}
+    filter = {'email': req_body['email']}
+    print("!!!!: ", req_body['email'])
     m = merchants.find_one(filter)
     if m:
         response = jsonify({
@@ -88,7 +92,7 @@ def handle_register():
     
     pass_hash = generate_password_hash(req_body['password'])
     m = {
-        'mobile': req_body['mobile'],
+        'email': req_body['email'],
         'password': pass_hash,
         'category_id': None,
         'name': None,
@@ -97,9 +101,9 @@ def handle_register():
         'service_hours': None,
         'status': 'setup',
         'username': None,
-        'email': None,
         'services': None
     }
+    print(m)
     merchant_id = str(merchants.insert_one(m).inserted_id)
     m['id'] = str(merchant_id)
     del m['_id']

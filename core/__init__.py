@@ -5,6 +5,7 @@ from .kyc import kyc as kyc_bp
 from .staff import staff as staff_bp
 from .services import services as services_bp
 from .bookings import bookings as bookings_bp
+from .stores import stores as stores_bp
 
 def create_app(config_object='core.settings'):
     app = Flask(__name__)
@@ -17,5 +18,6 @@ def create_app(config_object='core.settings'):
     app.register_blueprint(staff_bp)
     app.register_blueprint(services_bp)
     app.register_blueprint(bookings_bp)
+    app.register_blueprint(stores_bp)
 
     return app

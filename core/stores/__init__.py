@@ -9,7 +9,8 @@ stores = Blueprint('stores', __name__)
 
 @stores.route('/stores', methods=['POST'])
 @validate_token
-def handle_create_service(merchant):
+def handle_create_store(merchant):
+    print('!!!!!!!', merchant)
     req_body = request.get_json()
     schema = CreateStoreSchema()
     errors = schema.validate(req_body)
@@ -22,14 +23,8 @@ def handle_create_service(merchant):
         return response, 404
     
     stores = mongo.db.stores
-    s = {
-        'merchant_id': str(merchant['_id']),
-        'name': req_body['name'],
-        'price': req_body['price'],
-        'details': req_body['details'],
-        'staff': [],
-        'status': 'active'
-    }
+    s = req_body
+    s['merchant_id'] = str(merchant['_id'])
     stores.insert(s)
     response = jsonify({
         'status': 'success',
@@ -41,7 +36,7 @@ def handle_create_service(merchant):
     
 @stores.route('/stores/list', methods=['GET'])
 @validate_token
-def handle_get_all_service(merchant):
+def handle_get_all_store(merchant):
     stores = mongo.db.stores
     s = list(stores.find({'merchant_id': str(merchant['_id'])}))
     # s = json_util.dumps(s)
