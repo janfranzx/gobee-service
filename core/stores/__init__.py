@@ -1,17 +1,17 @@
 from flask import Blueprint, request, jsonify, Response
 from bson import objectid, json_util
 from datetime import datetime
-from .schema import CreateServiceSchema, UpdateServiceSchema
+from .schema import CreateStoreSchema, UpdateStoreSchema
 from ..auth import validate_token
 from ..db import mongo
 
-services = Blueprint('services', __name__)
+stores = Blueprint('stores', __name__)
 
-@services.route('/services', methods=['POST'])
+@stores.route('/stores', methods=['POST'])
 @validate_token
 def handle_create_service(merchant):
     req_body = request.get_json()
-    schema = CreateServiceSchema()
+    schema = CreateStoreSchema()
     errors = schema.validate(req_body)
     if errors:
         response = jsonify({
@@ -21,7 +21,7 @@ def handle_create_service(merchant):
 
         return response, 404
     
-    services = mongo.db.services
+    stores = mongo.db.stores
     s = {
         'merchant_id': str(merchant['_id']),
         'name': req_body['name'],
@@ -30,7 +30,7 @@ def handle_create_service(merchant):
         'staff': [],
         'status': 'active'
     }
-    services.insert(s)
+    stores.insert(s)
     response = jsonify({
         'status': 'success',
         'message': 'Successfully saved service',
@@ -39,15 +39,15 @@ def handle_create_service(merchant):
 
     return response, 201
     
-@services.route('/services/list', methods=['GET'])
+@stores.route('/stores/list', methods=['GET'])
 @validate_token
 def handle_get_all_service(merchant):
-    services = mongo.db.services
-    s = list(services.find({'merchant_id': str(merchant['_id'])}))
+    stores = mongo.db.stores
+    s = list(stores.find({'merchant_id': str(merchant['_id'])}))
     # s = json_util.dumps(s)
     resp = {
         'status': 'success',
-        'message': 'Successfully retrieved services',
+        'message': 'Successfully retrieved stores',
         'data':  s
     }
 
@@ -58,11 +58,11 @@ def handle_get_all_service(merchant):
 
     # return response, 200
 
-@services.route('/services/<service_id>', methods=['GET'])
+@stores.route('/stores/<store_id>', methods=['GET'])
 @validate_token
 def handle_get_service(merchant, service_id):
-    services = mongo.db.services
-    s = services.find_one({'_id': objectid.ObjectId(service_id)})
+    stores = mongo.db.stores
+    s = stores.find_one({'_id': objectid.ObjectId(service_id)})
     
     if s is None:
         response = jsonify({
@@ -91,17 +91,17 @@ def handle_get_service(merchant, service_id):
         mimetype='application/json'
     )
 
-@services.route('/services/<service_id>', methods=['DELETE'])
+@stores.route('/stores/<store_id>', methods=['DELETE'])
 @validate_token
 def handle_delete_service(merchant, service_id):
     #check if staff is owned by the requesting merchant
-    services = mongo.db.services
-    s = services.find_one({'_id': objectid.ObjectId(service_id)})
+    stores = mongo.db.stores
+    s = stores.find_one({'_id': objectid.ObjectId(service_id)})
     if str(merchant['_id']) == s['merchant_id']:
         s['deleted_at'] = datetime.now()
         update_opts = {'$set': s}
         options = {'_id': s['_id']}
-        services.update_one(options, update_opts)
+        stores.update_one(options, update_opts)
         response = jsonify({
             'status': 'success',
             'message': 'Successfully deleted staff'
@@ -116,11 +116,11 @@ def handle_delete_service(merchant, service_id):
 
     return resp, 400
 
-@services.route('/services/<service_id>', methods=['PUT'])
+@stores.route('/stores/<store_id>', methods=['PUT'])
 @validate_token
 def handle_update_staff(merchant, service_id):
     req_body = request.get_json()
-    schema = UpdateServiceSchema()
+    schema = UpdateStoreSchema()
     errors = schema.validate(req_body)
     if errors:
         response = jsonify({
@@ -129,8 +129,8 @@ def handle_update_staff(merchant, service_id):
         })
 
         return response, 404
-    services = mongo.db.services
-    s = services.find_one({'_id': objectid.ObjectId(service_id)})
+    stores = mongo.db.stores
+    s = stores.find_one({'_id': objectid.ObjectId(service_id)})
     if str(merchant['_id']) != s['merchant_id']:
         response = jsonify({
             'status': 'error',
@@ -150,7 +150,7 @@ def handle_update_staff(merchant, service_id):
     try:
         update_opts = {'$set': updates}
         options = {'_id': objectid.ObjectId(service_id)}
-        services.update_one(options, update_opts)
+        stores.update_one(options, update_opts)
     except:
         return jsonify({'status': 'error', 'message': 'Could not update staff'}), 400
     
